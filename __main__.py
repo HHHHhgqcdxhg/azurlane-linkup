@@ -170,7 +170,7 @@ class Blhx:
             vs += vsM
 
         for p in l2s:
-            # 对每一个 l2s 中的点做水平方向上的查找
+            # 对每一个 l2s 中的点做水平方向上的查找,此时只需要能到达的所有不为0的点即可
             _, _, vs2, _ = self.findLineFetch(p, parsed, dire=2)
             vs += vs2
 
@@ -182,9 +182,11 @@ class Blhx:
             l3s += l3sM
             vs += vsM
         for p in l3s:
-            # 对每一个 l3s 中的点做竖直方向上的查找
+            # 对每一个 l3s 中的点做竖直方向上的查找,此时只需要能到达的所有不为0的点即可
             _, _, _, vs2 = self.findLineFetch(p, parsed, dire=1)
             vs += vs2
+
+        # 返回两次拐点所有能到达的点的数字数组
         return vs
 
     def findAll(self, parsed, matched):
@@ -192,23 +194,36 @@ class Blhx:
         while matched.__len__():
             l = matched.__len__()
             for i in range(int(matched.__len__() // 2)):
+                # 遍历所有待处理点
+
                 start = matched[i * 2]
                 target = matched[i * 2 + 1]
                 value = parsed[start[0], start[1]]
+
+                # 这个点能到达的所有的点
                 vs = self.pointSearch(start, parsed)
+
                 if value in vs:
+                    # 如果目标点在其中,则将开始坐标和结束坐标加入结果数组
                     res.append(start)
                     res.append(target)
+
+                    # 将地图上的原开始和结束坐标置零
                     parsed[start[0], start[1]], parsed[target[0], target[1]] = 0, 0
+
+                    # 从所有待处理点中移除刚刚匹配过的点
                     del matched[i * 2 + 1]
                     del matched[i * 2]
+
                     break
             else:
+                # 如果没有break,且还有未处理的点,则代表游戏是坏游戏,无解
+                # return 是否有解,点击坐标顺序
                 return np.any(parsed),res
-
         return np.any(parsed),res
 
     def run(b):
+        # 点击开始,等待几秒后截图开始计算
         b.tap(1160, 529)
         time.sleep(4.2)
         print("print screen")
@@ -218,6 +233,7 @@ class Blhx:
         print(parsed, matched)
         tf, res = b.findAll(parsed, matched)
         if tf:
+            # 如果无解,直接左上角返回重开
             print("bad game")
             b.tap(32,24)
             time.sleep(5)
